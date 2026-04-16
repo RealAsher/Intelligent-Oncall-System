@@ -54,3 +54,9 @@ uploads/
 ### docker
 /volumes
 /server.pid
+
+### Local-only artifacts (do not commit)
+/devfolio-templete-main/
+/devfolio-templete.zip
+/package-lock.json
+/tools/

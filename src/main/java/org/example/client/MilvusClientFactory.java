@@ -76,16 +76,49 @@ public class MilvusClientFactory {
      */
     private MilvusServiceClient connectToMilvus() {
         ConnectParam.Builder builder = ConnectParam.newBuilder()
-                .withHost(milvusProperties.getHost())
-                .withPort(milvusProperties.getPort())
                 .withConnectTimeout(milvusProperties.getTimeout(), TimeUnit.MILLISECONDS);
 
-        // 如果配置了用户名和密码
-        if (milvusProperties.getUsername() != null && !milvusProperties.getUsername().isEmpty()) {
+        String endpoint;
+        // 优先使用 uri（用于 Zilliz Cloud 等云端连接）
+        if (milvusProperties.getUri() != null && !milvusProperties.getUri().isBlank()) {
+            builder.withUri(milvusProperties.getUri());
+            endpoint = milvusProperties.getUri();
+        } else {
+            builder.withHost(milvusProperties.getHost())
+                    .withPort(milvusProperties.getPort());
+            endpoint = milvusProperties.getHost() + ":" + milvusProperties.getPort();
+        }
+
+        String authType = "none";
+        String tokenMasked = "";
+        // 优先使用 token 认证
+        if (milvusProperties.getToken() != null && !milvusProperties.getToken().isBlank()) {
+            builder.withToken(milvusProperties.getToken());
+            authType = "token";
+            tokenMasked = maskToken(milvusProperties.getToken());
+        } else if (milvusProperties.getUsername() != null && !milvusProperties.getUsername().isEmpty()) {
+            // 兼容用户名/密码认证
             builder.withAuthorization(milvusProperties.getUsername(), milvusProperties.getPassword());
+            authType = "username/password";
+        }
+
+        if ("token".equals(authType)) {
+            logger.info("Milvus connect config -> endpoint: {}, auth: {}, token: {}", endpoint, authType, tokenMasked);
+        } else {
+            logger.info("Milvus connect config -> endpoint: {}, auth: {}", endpoint, authType);
         }
 
         return new MilvusServiceClient(builder.build());
+    }
+
+    private String maskToken(String token) {
+        if (token == null || token.isBlank()) {
+            return "";
+        }
+        if (token.length() <= 12) {
+            return "******";
+        }
+        return token.substring(0, 6) + "..." + token.substring(token.length() - 6);
     }
 
     /**

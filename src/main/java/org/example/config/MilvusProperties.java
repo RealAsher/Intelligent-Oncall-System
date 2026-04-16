@@ -7,15 +7,42 @@ import org.springframework.context.annotation.Configuration;
 @ConfigurationProperties(prefix = "milvus")
 public class MilvusProperties {
 
+    /**
+     * 云端连接 URI（Zilliz Cloud / Milvus Cloud），优先于 host/port
+     */
+    private String uri = "";
+
     private String host = "localhost";
     private Integer port = 19530;
+
+    /**
+     * 云端 token 认证（优先于 username/password）
+     */
+    private String token = "";
+
     private String username = "";
     private String password = "";
     private String database = "default";
     private Long timeout = 10000L;
 
+    public String getUri() {
+        return uri;
+    }
+
+    public void setUri(String uri) {
+        this.uri = uri;
+    }
+
     public String getHost() {
         return host;
+    }
+
+    public String getToken() {
+        return token;
+    }
+
+    public void setToken(String token) {
+        this.token = token;
     }
 
     public void setHost(String host) {
